@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accounts | Automatic Absentee Alert System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand-lockup compact" href="{{ url_for('faculty_dashboard') }}">
+          <span class="brand-mark">AA</span>
+          <span>
+            <strong>Absentee</strong>
+            <small>Alert System</small>
+          </span>
+        </a>
+        <nav class="sidebar-nav">
+          <a href="{{ url_for('faculty_dashboard') }}"><span class="nav-icon">D</span>Dashboard</a>
+          <a href="{{ url_for('students') }}"><span class="nav-icon">S</span>Students</a>
+          <a href="{{ url_for('attendance') }}"><span class="nav-icon">A</span>Attendance</a>
+          <a href="{{ url_for('reports') }}"><span class="nav-icon">R</span>Reports</a>
+          <a class="active" href="{{ url_for('accounts') }}"><span class="nav-icon">U</span>Accounts</a>
+        </nav>
+        <div class="mode-card">
+          <span>Alert mode</span>
+          <strong>{{ alert_mode }}</strong>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Faculty Admin</p>
+            <h1>Accounts</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="user-chip">{{ current_user.username }}</span>
+            <a class="btn ghost" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <section class="two-column align-start">
+          <article class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Faculty login</p>
+                <h2>Add faculty account</h2>
+              </div>
+            </div>
+            <form class="form-stack padded" method="post" action="{{ url_for('add_faculty_account') }}">
+              <label>
+                <span>Username</span>
+                <input name="username" placeholder="faculty_name" required>
+              </label>
+              <label>
+                <span>Password</span>
+                <input name="password" type="password" placeholder="Minimum 6 characters" required>
+              </label>
+              <button class="btn primary wide" type="submit">Create Faculty Login</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Student login</p>
+                <h2>Password control</h2>
+              </div>
+            </div>
+            <div class="empty-state text-left">Use the student table below to create a login or reset a password for any student added by faculty.</div>
+          </article>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <div>
+              <p>Faculty users</p>
+              <h2>Change faculty login or password</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>New password</th>
+                  <th>Created</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for faculty in faculty_accounts %}
+                  <tr>
+                    <td>
+                      <form id="faculty-form-{{ faculty.id }}" method="post" action="{{ url_for('change_faculty_password', faculty_id=faculty.id) }}">
+                        <input name="username" value="{{ faculty.username }}" required>
+                      </form>
+                    </td>
+                    <td>
+                      <input form="faculty-form-{{ faculty.id }}" name="password" type="password" placeholder="New password" required>
+                    </td>
+                    <td>{{ faculty.created_at[:10] if faculty.created_at else "" }}</td>
+                    <td><button class="btn secondary" form="faculty-form-{{ faculty.id }}" type="submit">Update</button></td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="4" class="empty-cell">No faculty accounts found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <div>
+              <p>Student users</p>
+              <h2>Create or reset student login</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Roll</th>
+                  <th>Name</th>
+                  <th>Branch</th>
+                  <th>Year</th>
+                  <th>Section</th>
+                  <th>Username</th>
+                  <th>New password</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for student in student_accounts %}
+                  <tr>
+                    <td>{{ student.roll }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.branch }}</td>
+                    <td>{{ student.class_name }}</td>
+                    <td>{{ student.section_name }}</td>
+                    <td>
+                      <form id="student-form-{{ student.id }}" method="post" action="{{ url_for('change_student_password', student_id=student.id) }}">
+                        <input name="username" value="{{ student.login_username or student.roll|lower }}" required>
+                      </form>
+                    </td>
+                    <td>
+                      <input form="student-form-{{ student.id }}" name="password" type="password" placeholder="New password" required>
+                    </td>
+                    <td><button class="btn secondary" form="student-form-{{ student.id }}" type="submit">Save Login</button></td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="8" class="empty-cell">No students found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

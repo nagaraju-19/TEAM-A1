@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ "Reports" if view == "reports" else "Dashboard" }} | Automatic Absentee Alert System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand-lockup compact" href="{{ url_for('faculty_dashboard') }}">
+          <span class="brand-mark">AA</span>
+          <span>
+            <strong>Absentee</strong>
+            <small>Alert System</small>
+          </span>
+        </a>
+        <nav class="sidebar-nav">
+          <a class="{{ 'active' if view == 'dashboard' else '' }}" href="{{ url_for('faculty_dashboard') }}"><span class="nav-icon">D</span>Dashboard</a>
+          <a href="{{ url_for('students') }}"><span class="nav-icon">S</span>Students</a>
+          <a href="{{ url_for('attendance') }}"><span class="nav-icon">A</span>Attendance</a>
+          <a class="{{ 'active' if view == 'reports' else '' }}" href="{{ url_for('reports') }}"><span class="nav-icon">R</span>Reports</a>
+          <a href="{{ url_for('accounts') }}"><span class="nav-icon">U</span>Accounts</a>
+        </nav>
+        <div class="mode-card">
+          <span>Alert mode</span>
+          <strong>{{ alert_mode }}</strong>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Faculty Admin</p>
+            <h1>{{ "Reports" if view == "reports" else "Dashboard" }}</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="user-chip">{{ current_user.username }}</span>
+            <a class="btn ghost" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% if view == "dashboard" %}
+          <section class="metric-grid">
+            <article class="metric-card">
+              <span>Total students</span>
+              <strong>{{ total_students }}</strong>
+            </article>
+            <article class="metric-card">
+              <span>System users</span>
+              <strong>{{ total_users }}</strong>
+            </article>
+            <article class="metric-card">
+              <span>Today present</span>
+              <strong>{{ today_summary.present }}</strong>
+            </article>
+            <article class="metric-card">
+              <span>Overall attendance</span>
+              <strong>{{ overall_summary.percentage }}%</strong>
+            </article>
+          </section>
+
+          <section class="two-column">
+            <article class="panel">
+              <div class="panel-title">
+                <div>
+                  <p>Academic structure</p>
+                  <h2>Class, branch, and section groups</h2>
+                </div>
+                <a class="btn secondary" href="{{ url_for('students') }}">Manage Students</a>
+              </div>
+              {% if groups %}
+                <div class="group-stack">
+                  {% for group in groups %}
+                    <div class="class-group">
+                      <div class="group-heading">
+                        <strong>{{ group.class_name }}</strong>
+                      </div>
+                      {% for branch in group.branches %}
+                        <div class="section-line branch-line">
+                          <span>Branch {{ branch.branch }}</span>
+                        </div>
+                        {% for section in branch.sections %}
+                          <div class="section-line">
+                            <span>Section {{ section.section_name }}</span>
+                            <strong>{{ section.students|length }} students</strong>
+                          </div>
+                        {% endfor %}
+                      {% endfor %}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="empty-state">No students added yet.</div>
+              {% endif %}
+            </article>
+
+            <article class="panel">
+              <div class="panel-title">
+                <div>
+                  <p>Recent alerts</p>
+                  <h2>Parent SMS and calls</h2>
+                </div>
+              </div>
+              {% if alerts %}
+                <div class="activity-list">
+                  {% for alert in alerts %}
+                    <div class="activity-item">
+                      <strong>{{ alert.name }} · {{ alert.channel|upper }}</strong>
+                      <span>{{ alert.parent_name }} · {{ alert.date }} · Period {{ alert.period }} · {{ alert.status }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="empty-state">No absence alerts have been sent yet.</div>
+              {% endif %}
+            </article>
+          </section>
+        {% else %}
+          <section class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Attendance reports</p>
+                <h2>Class-wise and section-wise filtering</h2>
+              </div>
+            </div>
+            <form class="filter-grid" method="get">
+              <label>
+                <span>Year</span>
+                <select name="class_id">
+                  <option value="">All years</option>
+                  {% for cls in classes %}
+                    <option value="{{ cls.id }}" {% if selected_class_id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                <span>Branch</span>
+                <select name="branch">
+                  <option value="">All branches</option>
+                  {% for branch in branches %}
+                    <option value="{{ branch.branch_name }}" {% if selected_branch == branch.branch_name %}selected{% endif %}>{{ branch.branch_name }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                <span>Section</span>
+                <select name="section_id">
+                  <option value="">All sections</option>
+                  {% for section in sections %}
+                    <option value="{{ section.id }}" {% if selected_section_id == section.id %}selected{% endif %}>{{ section.section_name }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                <span>Date</span>
+                <input type="date" name="date" value="{{ selected_date }}">
+              </label>
+              <button class="btn primary" type="submit">Apply Filter</button>
+            </form>
+          </section>
+
+          <section class="metric-grid compact-grid">
+            <article class="metric-card">
+              <span>Total marked</span>
+              <strong>{{ report_summary.total }}</strong>
+            </article>
+            <article class="metric-card">
+              <span>Present</span>
+              <strong>{{ report_summary.present }}</strong>
+            </article>
+            <article class="metric-card">
+              <span>Absent</span>
+              <strong>{{ report_summary.absent }}</strong>
+            </article>
+            <article class="metric-card">
+              <span>Attendance</span>
+              <strong>{{ report_summary.percentage }}%</strong>
+            </article>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Records</p>
+                <h2>Attendance table</h2>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Period</th>
+                    <th>Student</th>
+                    <th>Roll</th>
+                    <th>Branch</th>
+                    <th>Parent Name</th>
+                    <th>Year</th>
+                    <th>Section</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in report_rows %}
+                    <tr>
+                      <td>{{ row.date }}</td>
+                      <td>{{ row.period }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.roll }}</td>
+                      <td>{{ row.branch }}</td>
+                      <td>{{ row.parent_name }}</td>
+                      <td>{{ row.class_name }}</td>
+                      <td>{{ row.section_name }}</td>
+                      <td><span class="status {{ row.status|lower }}">{{ row.status }}</span></td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="9" class="empty-cell">No attendance records match this filter.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        {% endif %}
+      </main>
+    </div>
+  </body>
+</html>

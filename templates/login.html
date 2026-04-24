@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ "Faculty" if role == "faculty" else "Student" }} {{ "Signup" if mode == "signup" else "Login" }} | Absentee Alert System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body class="auth-body">
+    <main class="auth-layout">
+      <section class="auth-hero">
+        <div class="brand-lockup">
+          <span class="brand-mark">AA</span>
+          <span>
+            <strong>Automatic Absentee</strong>
+            <small>Alert System</small>
+          </span>
+        </div>
+        <div class="hero-panel">
+          <div class="hero-grid">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div class="hero-copy">
+            <p>Attendance control</p>
+            <h1>Absence alerts with faculty and student access.</h1>
+          </div>
+        </div>
+      </section>
+
+      <section class="auth-card-wrap">
+        <div class="auth-card">
+          <div class="auth-switch">
+            <a class="{{ 'active' if role == 'faculty' else '' }}" href="{{ url_for('login', role='faculty') }}">Faculty</a>
+            <a class="{{ 'active' if role == 'student' else '' }}" href="{{ url_for('login', role='student') }}">Student</a>
+          </div>
+
+          <div class="section-heading">
+            <p>{{ "Create account" if mode == "signup" else "Secure login" }}</p>
+            <h2>{{ "Faculty" if role == "faculty" else "Student" }} {{ "Signup" if mode == "signup" else "Login" }}</h2>
+          </div>
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="flash-stack">
+                {% for category, message in messages %}
+                  <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          <form class="form-stack" method="post">
+            {% if mode == "signup" and role == "student" %}
+              <label>
+                <span>Roll number</span>
+                <input name="roll" placeholder="BT24A001" required>
+              </label>
+              <label>
+                <span>Parent phone</span>
+                <input name="parent_phone" placeholder="+15551230001" required>
+              </label>
+            {% endif %}
+
+            <label>
+              <span>Username</span>
+              <input name="username" autocomplete="username" placeholder="Create or enter username" required>
+            </label>
+
+            <label>
+              <span>Password</span>
+              <input name="password" type="password" autocomplete="{{ 'new-password' if mode == 'signup' else 'current-password' }}" placeholder="Enter password" required>
+            </label>
+
+            {% if mode == "signup" %}
+              <label>
+                <span>Confirm password</span>
+                <input name="confirm_password" type="password" autocomplete="new-password" placeholder="Re-enter password" required>
+              </label>
+            {% endif %}
+
+            <button class="btn primary wide" type="submit">
+              {{ "Create Account" if mode == "signup" else "Login" }}
+            </button>
+          </form>
+
+          {% if mode == "signup" %}
+            <div class="auth-links">
+              <span>Already registered?</span>
+              <a href="{{ url_for('login', role=role) }}">Back to login</a>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

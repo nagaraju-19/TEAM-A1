@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Attendance | Automatic Absentee Alert System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand-lockup compact" href="{{ url_for('faculty_dashboard') }}">
+          <span class="brand-mark">AA</span>
+          <span>
+            <strong>Absentee</strong>
+            <small>Alert System</small>
+          </span>
+        </a>
+        <nav class="sidebar-nav">
+          <a href="{{ url_for('faculty_dashboard') }}"><span class="nav-icon">D</span>Dashboard</a>
+          <a href="{{ url_for('students') }}"><span class="nav-icon">S</span>Students</a>
+          <a class="active" href="{{ url_for('attendance') }}"><span class="nav-icon">A</span>Attendance</a>
+          <a href="{{ url_for('reports') }}"><span class="nav-icon">R</span>Reports</a>
+          <a href="{{ url_for('accounts') }}"><span class="nav-icon">U</span>Accounts</a>
+        </nav>
+        <div class="mode-card">
+          <span>Alert mode</span>
+          <strong>{{ alert_mode }}</strong>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Faculty Admin</p>
+            <h1>Attendance</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="user-chip">{{ current_user.username }}</span>
+            <a class="btn ghost" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <section class="panel">
+          <div class="panel-title">
+            <div>
+              <p>Attendance filters</p>
+              <h2>Select year, branch, section, date, and period</h2>
+            </div>
+          </div>
+          <form class="filter-grid" method="get">
+            <label>
+              <span>Year</span>
+              <select name="class_id">
+                {% for cls in classes %}
+                  <option value="{{ cls.id }}" {% if selected_class_id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>Branch</span>
+              <select name="branch">
+                {% for branch in branches %}
+                  <option value="{{ branch.branch_name }}" {% if selected_branch == branch.branch_name %}selected{% endif %}>{{ branch.branch_name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>Section</span>
+              <select name="section_id">
+                {% for section in sections %}
+                  <option value="{{ section.id }}" {% if selected_section_id == section.id %}selected{% endif %}>Section {{ section.section_name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <span>Date</span>
+              <input type="date" name="date" value="{{ selected_date }}">
+            </label>
+            <label>
+              <span>Period</span>
+              <select name="period">
+                {% for period in periods %}
+                  <option value="{{ period }}" {% if selected_period == period %}selected{% endif %}>Period {{ period }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <button class="btn primary" type="submit">Load Sheet</button>
+          </form>
+        </section>
+
+        <section class="metric-grid compact-grid">
+          <article class="metric-card">
+            <span>Total marked</span>
+            <strong>{{ summary.total }}</strong>
+          </article>
+          <article class="metric-card">
+            <span>Present</span>
+            <strong>{{ summary.present }}</strong>
+          </article>
+          <article class="metric-card">
+            <span>Absent</span>
+            <strong>{{ summary.absent }}</strong>
+          </article>
+          <article class="metric-card">
+            <span>Attendance</span>
+            <strong>{{ summary.percentage }}%</strong>
+          </article>
+        </section>
+
+        <section class="two-column align-start">
+          <article class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Daily sheet</p>
+                <h2>{{ selected_date }} · Period {{ selected_period }}</h2>
+              </div>
+            </div>
+            <form method="post" action="{{ url_for('mark_attendance') }}">
+              <input type="hidden" name="class_id" value="{{ selected_class_id or '' }}">
+              <input type="hidden" name="branch" value="{{ selected_branch or '' }}">
+              <input type="hidden" name="section_id" value="{{ selected_section_id or '' }}">
+              <input type="hidden" name="date" value="{{ selected_date }}">
+              <input type="hidden" name="period" value="{{ selected_period }}">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Roll</th>
+                      <th>Name</th>
+                      <th>Branch</th>
+                      <th>Attendance %</th>
+                      <th>Parent Name</th>
+                      <th>Parent Phone</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for student in students %}
+                      {% set status = attendance_map.get(student.id, "Present") %}
+                      <tr>
+                        <td>{{ student.roll }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.branch }}</td>
+                        <td><strong>{{ student.attendance_percentage }}%</strong></td>
+                        <td>{{ student.parent_name }}</td>
+                        <td>{{ student.parent_phone }}</td>
+                        <td>
+                          <div class="radio-pair">
+                            <label>
+                              <input type="radio" name="status_{{ student.id }}" value="Present" {% if status == "Present" %}checked{% endif %}>
+                              <span>Present</span>
+                            </label>
+                            <label>
+                              <input type="radio" name="status_{{ student.id }}" value="Absent" {% if status == "Absent" %}checked{% endif %}>
+                              <span>Absent</span>
+                            </label>
+                          </div>
+                        </td>
+                      </tr>
+                    {% else %}
+                      <tr><td colspan="7" class="empty-cell">No students found for this year and section.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="panel-actions">
+                <button class="btn primary" type="submit" {% if not students %}disabled{% endif %}>Submit Attendance</button>
+              </div>
+            </form>
+          </article>
+
+          <aside class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Alert log</p>
+                <h2>Recent automatic alerts</h2>
+              </div>
+            </div>
+            {% if alerts %}
+              <div class="activity-list">
+                {% for alert in alerts %}
+                  <div class="activity-item">
+                    <strong>{{ alert.name }} · {{ alert.channel|upper }}</strong>
+                    <span>{{ alert.date }} · Period {{ alert.period }} · {{ alert.status }}</span>
+                    <small>{{ alert.parent_name }} · {{ alert.parent_phone }}</small>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="empty-state">No absence alerts have been logged yet.</div>
+            {% endif %}
+          </aside>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <div>
+              <p>Filtered attendance table</p>
+              <h2>Saved records</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Period</th>
+                    <th>Roll</th>
+                    <th>Name</th>
+                    <th>Branch</th>
+                    <th>Parent Name</th>
+                    <th>Year</th>
+                    <th>Section</th>
+                    <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in table_rows %}
+                  <tr>
+                    <td>{{ row.date }}</td>
+                    <td>{{ row.period }}</td>
+                    <td>{{ row.roll }}</td>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.branch }}</td>
+                    <td>{{ row.parent_name }}</td>
+                    <td>{{ row.class_name }}</td>
+                    <td>{{ row.section_name }}</td>
+                    <td><span class="status {{ row.status|lower }}">{{ row.status }}</span></td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="9" class="empty-cell">Attendance has not been marked for this filter yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

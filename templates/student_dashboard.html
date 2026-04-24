@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Student Dashboard | Automatic Absentee Alert System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand-lockup compact" href="{{ url_for('student_dashboard') }}">
+          <span class="brand-mark">AA</span>
+          <span>
+            <strong>Absentee</strong>
+            <small>Student Portal</small>
+          </span>
+        </a>
+        <nav class="sidebar-nav">
+          <a class="active" href="{{ url_for('student_dashboard') }}"><span class="nav-icon">D</span>Dashboard</a>
+        </nav>
+        <div class="mode-card">
+          <span>Logged in as</span>
+          <strong>{{ current_user.username }}</strong>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">{{ student.branch }} · {{ student.class_name }} · Section {{ student.section_name }}</p>
+            <h1>{{ student.name }}</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="user-chip">Roll {{ student.roll }}</span>
+            <a class="btn ghost" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <section class="student-hero">
+          <div>
+            <p>Overall attendance</p>
+            <h2>{{ stats.percentage }}%</h2>
+            <span>{{ stats.present }} present out of {{ stats.total }} marked periods</span>
+          </div>
+          <div class="ring" style="--value: {{ stats.percentage }};">
+            <span>{{ stats.percentage }}%</span>
+          </div>
+        </section>
+
+        <section class="metric-grid compact-grid">
+          <article class="metric-card">
+            <span>Total periods</span>
+            <strong>{{ stats.total }}</strong>
+          </article>
+          <article class="metric-card">
+            <span>Present</span>
+            <strong>{{ stats.present }}</strong>
+          </article>
+          <article class="metric-card">
+            <span>Absent</span>
+            <strong>{{ stats.absent }}</strong>
+          </article>
+          <article class="metric-card">
+            <span>Roll number</span>
+            <strong class="fit-text">{{ student.roll }}</strong>
+          </article>
+          <article class="metric-card">
+            <span>Parent name</span>
+            <strong class="fit-text">{{ student.parent_name }}</strong>
+          </article>
+        </section>
+
+        <section class="two-column align-start">
+          <article class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Date-wise attendance</p>
+                <h2>Attendance records</h2>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Period</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for record in records %}
+                    <tr>
+                      <td>{{ record.date }}</td>
+                      <td>{{ record.period }}</td>
+                      <td><span class="status {{ record.status|lower }}">{{ record.status }}</span></td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="3" class="empty-cell">Attendance has not been marked yet.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <aside class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Period-wise attendance</p>
+                <h2>Periods 1-8</h2>
+              </div>
+            </div>
+            <div class="period-list">
+              {% for period in period_summary %}
+                <div class="period-row">
+                  <span>Period {{ period.period }}</span>
+                  <strong>{{ period.percentage }}%</strong>
+                  <small>{{ period.present }}/{{ period.total }} present</small>
+                </div>
+              {% endfor %}
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Students | Automatic Absentee Alert System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand-lockup compact" href="{{ url_for('faculty_dashboard') }}">
+          <span class="brand-mark">AA</span>
+          <span>
+            <strong>Absentee</strong>
+            <small>Alert System</small>
+          </span>
+        </a>
+        <nav class="sidebar-nav">
+          <a href="{{ url_for('faculty_dashboard') }}"><span class="nav-icon">D</span>Dashboard</a>
+          <a class="active" href="{{ url_for('students') }}"><span class="nav-icon">S</span>Students</a>
+          <a href="{{ url_for('attendance') }}"><span class="nav-icon">A</span>Attendance</a>
+          <a href="{{ url_for('reports') }}"><span class="nav-icon">R</span>Reports</a>
+          <a href="{{ url_for('accounts') }}"><span class="nav-icon">U</span>Accounts</a>
+        </nav>
+        <div class="mode-card">
+          <span>Alert mode</span>
+          <strong>{{ alert_mode }}</strong>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Faculty Admin</p>
+            <h1>Students</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="user-chip">{{ current_user.username }}</span>
+            <a class="btn ghost" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <section class="panel">
+          <div class="panel-title">
+            <div>
+              <p>Academic flow</p>
+              <h2>Select year, branch, and section</h2>
+            </div>
+          </div>
+          <form class="flow-grid" method="get">
+            <label>
+              <strong>Step 1</strong>
+              <span>Year</span>
+              <select name="class_id">
+                {% for cls in classes %}
+                  <option value="{{ cls.id }}" {% if selected_class_id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <strong>Step 2</strong>
+              <span>Branch</span>
+              <select name="branch">
+                {% for branch in branches %}
+                  <option value="{{ branch.branch_name }}" {% if selected_branch == branch.branch_name %}selected{% endif %}>{{ branch.branch_name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              <strong>Step 3</strong>
+              <span>Section</span>
+              <select name="section_id">
+                {% for section in sections %}
+                  <option value="{{ section.id }}" {% if selected_section_id == section.id %}selected{% endif %}>Section {{ section.section_name }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <button class="btn primary" type="submit">Show Students</button>
+          </form>
+        </section>
+
+        <section class="two-column align-start">
+          <article class="panel">
+            <div class="panel-title">
+              <div>
+                <p>Step 4</p>
+                <h2>Students in selected section</h2>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Roll</th>
+                    <th>Name</th>
+                    <th>Branch</th>
+                    <th>Year</th>
+                    <th>Section</th>
+                    <th>Parent Name</th>
+                    <th>Parent Phone</th>
+                    <th>Login</th>
+                    <th>Attendance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in students %}
+                    <tr>
+                      <td>{{ student.roll }}</td>
+                      <td>{{ student.name }}</td>
+                      <td>{{ student.branch }}</td>
+                      <td>{{ student.class_name }}</td>
+                      <td>{{ student.section_name }}</td>
+                      <td>{{ student.parent_name }}</td>
+                      <td>{{ student.parent_phone }}</td>
+                      <td>{{ student.login_username or "Not signed up" }}</td>
+                      <td><strong>{{ student.attendance_percentage }}%</strong></td>
+                    </tr>
+                  {% else %}
+                    <tr><td colspan="9" class="empty-cell">No students found in this section.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <aside class="panel">
+            <div class="panel-title">
+              <div>
+                <p>New record</p>
+                <h2>Add student</h2>
+              </div>
+            </div>
+            <form class="form-stack padded" method="post" action="{{ url_for('add_student') }}">
+              <input type="hidden" name="class_id" value="{{ selected_class_id or '' }}">
+              <input type="hidden" name="section_id" value="{{ selected_section_id or '' }}">
+              <label>
+                <span>Name</span>
+                <input name="name" placeholder="Student name" required>
+              </label>
+              <label>
+                <span>Roll number</span>
+                <input name="roll" placeholder="BT24A004" required>
+              </label>
+              <label>
+                <span>Branch</span>
+                <select name="branch">
+                  {% for branch in branches %}
+                    <option value="{{ branch.branch_name }}" {% if selected_branch == branch.branch_name %}selected{% endif %}>{{ branch.branch_name }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                <span>Parent name</span>
+                <input name="parent_name" placeholder="Parent name" required>
+              </label>
+              <label>
+                <span>Parent phone</span>
+                <input name="parent_phone" placeholder="+15551234567" required>
+              </label>
+              <button class="btn primary wide" type="submit">Add Student</button>
+            </form>
+          </aside>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <div>
+              <p>Directory</p>
+              <h2>Students grouped by Class -> Branch -> Section</h2>
+            </div>
+          </div>
+          {% if groups %}
+            <div class="group-stack">
+              {% for group in groups %}
+                <div class="class-group">
+                  <div class="group-heading">
+                    <strong>{{ group.class_name }}</strong>
+                  </div>
+                  {% for branch in group.branches %}
+                    <div class="section-table">
+                      <div class="section-line branch-line">
+                        <span>Branch {{ branch.branch }}</span>
+                      </div>
+                      {% for section in branch.sections %}
+                        <div class="section-line">
+                          <span>Section {{ section.section_name }}</span>
+                          <strong>{{ section.students|length }} students</strong>
+                        </div>
+                        <div class="mini-list">
+                          {% for student in section.students %}
+                            <span>{{ student.roll }} · {{ student.name }}</span>
+                          {% endfor %}
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state">No students added yet.</div>
+          {% endif %}
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
