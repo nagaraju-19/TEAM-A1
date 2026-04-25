@@ -36,7 +36,7 @@ Without Twilio credentials, the app runs in simulation mode and logs each SMS/ca
 Set these environment variables for live delivery:
 
 ```bash
-export FLASK_SECRET_KEY="replace-with-a-long-random-secret"
+export FLASK_SECRET_KEY="09e4f9a73fe87b0ddf849c5b380f0415bae0f47f35fc93dfdf049a44d0755602"
 export TWILIO_ACCOUNT_SID="ACe843519e5978d03c4e44232754e64b88"
 export TWILIO_AUTH_TOKEN="b0e51eac52fb175e75fa938ccb364631"
 export TWILIO_FROM_NUMBER="+18147040375"
