@@ -37,10 +37,10 @@ Set these environment variables for live delivery:
 
 ```bash
 export FLASK_SECRET_KEY="replace-with-a-long-random-secret"
-export TWILIO_ACCOUNT_SID="AC..."
-export TWILIO_AUTH_TOKEN="..."
-export TWILIO_FROM_NUMBER="+15551234567"
-export TWILIO_VOICE_FROM_NUMBER="+15551234567"
+export TWILIO_ACCOUNT_SID="ACe843519e5978d03c4e44232754e64b88"
+export TWILIO_AUTH_TOKEN="b0e51eac52fb175e75fa938ccb364631"
+export TWILIO_FROM_NUMBER="+18147040375"
+export TWILIO_VOICE_FROM_NUMBER="+18147040375"
 python3 app.py
 ```
 
